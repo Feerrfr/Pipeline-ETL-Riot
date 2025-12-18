@@ -1,0 +1,6 @@
+# Archivos de sistema y entornos 
+__pycache__/
+venv/
+.env
+
+pipeline.conf
