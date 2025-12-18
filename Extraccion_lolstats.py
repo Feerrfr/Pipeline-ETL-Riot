@@ -143,7 +143,7 @@ def upsert_data_as_delta(data, data_path, predicate, storage_options):
 parser = ConfigParser()                                             # Sirve para entrar a pipeline.conf y sacar las credenciales de ahi
 parser.optionxform = str
 parser.read("pipeline.conf")
-api_credentials= st.secret["api-credentials"]
+api_credentials= st.secrets["api-credentials"]
 
 api_key= api_credentials["api_key"]   #Cambia cada 24hs
 headers = {"X-Riot-Token": api_key}
