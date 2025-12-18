@@ -27,8 +27,8 @@ def ejecutar_script(nombre_script):
 if __name__ == "__main__":
     print("🚀 INICIANDO PIPELINE DE DATOS: Player Analisis\n")
 
-    st.title("🚀 Mi Proyecto de Data Engineering")
-    st.write("Si puedes leer esto, ¡el servidor funciona!")
+    st.title("🚀 Analisis a un jugador de League Of Legends ETL:")
+    st.write("Panel de control")
     
     if st.button("🚀 Correr script completo"):# 1. Ejecutar Bronze (Extracción)
         extraccion.extraccion_lolstats()
@@ -36,12 +36,8 @@ if __name__ == "__main__":
             
             # 2. Ejecutar Silver (Limpieza)
             # Solo se ejecuta si el paso 1 (Bronze) fue True
-        if transformacion.verificar_silver():
-                st.dataframe(transformacion.partidas_silver())
-                print("✨ Sin partidas nuevas para procesar. Pipeline terminado.")
-        else:
-                transformacion.ejecutar_transformacion()
-                print("🎉 Nuevas partidas procesadas. Pipeline terminado.")
+        transformacion.ejecutar_transformacion()
+        print("✅ Transformación completada.\n")
     
 
     if st.button("🔄 Buscar nuevas partidas"):
