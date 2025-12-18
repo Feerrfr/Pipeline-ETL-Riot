@@ -3,6 +3,7 @@ from deltalake import DeltaTable, write_deltalake
 from configparser import ConfigParser
 from datetime import datetime
 from pprint import pprint
+import streamlit as st
 
 def save_data_as_delta(df, path, storage_options, mode="overwrite", partition_cols=None):
     """
@@ -165,4 +166,5 @@ print(df_silver.info(memory_usage= 'deep'))
 
 save_data_as_delta(df_silver, statsSilver_dir, storage_options, mode="append")
 print(f"Partidas antiguas en silver: {partidas_guardadas}, nuevas: {cantidad_filas_nuevas}.")
+st.dataframe(df_silver)
 

@@ -220,3 +220,6 @@ dt = DeltaTable(stations_raw_dir, storage_options=storage_options)
 print(f"Cant de filas: {dt.to_pandas().shape[0]}")
 
 print("Dataframe guardado en Delta Lake correctamente.")
+
+st.title("🚀 Mi Proyecto de Data Engineering")
+st.write("Si puedes leer esto, ¡el servidor funciona!")
