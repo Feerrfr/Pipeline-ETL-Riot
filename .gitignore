@@ -4,3 +4,4 @@ venv/
 .env
 
 pipeline.conf
+secrets.toml

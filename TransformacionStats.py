@@ -22,7 +22,9 @@ def save_data_as_delta(df, path, storage_options, mode="overwrite", partition_co
     write_deltalake(
         path, df, mode=mode, storage_options=storage_options, partition_by=partition_cols, schema_mode="merge"
     )
-
+def partidas_silver():
+    dt_silver = DeltaTable(statsSilver_dir, storage_options=storage_options)
+    return dt_silver.to_pandas()
 
 #---- Configuracion de parser
 

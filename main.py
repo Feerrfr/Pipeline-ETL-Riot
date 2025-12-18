@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import time
+import streamlit as st
+import TransformacionStats as transformacion
 
 def ejecutar_script(nombre_script):
     print(f"▶️ Iniciando: {nombre_script}...")
@@ -28,7 +30,7 @@ if __name__ == "__main__":
         # 2. Ejecutar Silver (Limpieza)
         # Solo se ejecuta si el paso 1 (Bronze) fue True
         if ejecutar_script("TransformacionStats.py"):
-            
+            st.dataframe(transformacion.partidas_silver())
             print("✨ ¡PIPELINE COMPLETADO EXITOSAMENTE! ✨")
         else:
             print("💀 El proceso murió en la etapa Silver.")
