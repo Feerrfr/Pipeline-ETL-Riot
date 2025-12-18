@@ -47,126 +47,137 @@ statsSilver_dir = f"{silver_dir}/registroSebastian"
 
 dt_bronze = DeltaTable(statsBronze_dir, storage_options=storage_options)
 
+
+def entregar_bronze():
+    return dt_bronze.to_pandas()
 df = dt_bronze.to_pandas()
 #print(df.dtypes)
-
-#---- Verificar existencia de silver_data, y obtener la última fecha procesada. De no haber nueva el script se detiene.
-
-print("Última partida procesada...")
-
-ultima_fecha = 0
 partidas_guardadas = 0
-try:
-    # 1. Intentamos conectar a la tabla Silver existente
-    dt_silver = DeltaTable(statsSilver_dir, storage_options=storage_options)
-    df_fechas = dt_silver.to_pandas(columns=["gameCreation"])
-    partidas_guardadas = len(df_fechas)
+#---- Verificar existencia de silver_data, y obtener la última fecha procesada. De no haber nueva el script se detiene.
+def verificar_silver():
+    print("Última partida procesada...")
 
-    if not df_fechas.empty:
-        # Buscamos el valor máximo (la partida más reciente)
-        ultima_fecha = df_fechas["gameCreation"].max()
-        print(f"📅 Última fecha encontrada en Silver: {datetime.fromtimestamp(ultima_fecha / 1000)}")
-    else:
-        print("⚠️ La tabla Silver existe pero está vacía. Se procesará todo.")    
-except Exception as e:
-    print("✨ No existe tabla Silver aún (Carga Inicial). Se procesará todo.")
-    print(f"Detalle del error: {e}")
+    ultima_fecha = 0
+    partidas_guardadas = 0
+    try:
+        # 1. Intentamos conectar a la tabla Silver existente
+        dt_silver = DeltaTable(statsSilver_dir, storage_options=storage_options)
+        df_fechas = dt_silver.to_pandas(columns=["gameCreation"])
+        partidas_guardadas = len(df_fechas)
 
-df = df[df['gameCreation'] > ultima_fecha].copy()
-cantidad_nuevas = len(df)
-print(f"🔥 Nuevas partidas para procesar: {cantidad_nuevas}")
-if df.empty:
-    print("😴 No hay datos nuevos. El script termina aquí.")
-    print(f"Partidas totales en silver: {partidas_guardadas}.")
-    exit()
+        if not df_fechas.empty:
+            # Buscamos el valor máximo (la partida más reciente)
+            ultima_fecha = df_fechas["gameCreation"].max()
+            print(f"📅 Última fecha encontrada en Silver: {datetime.fromtimestamp(ultima_fecha / 1000)}")
+            return True
+        else:
+            print("⚠️ La tabla Silver existe pero está vacía. Se procesará todo.") 
+            return True  
+    except Exception as e:
+        print("✨ No existe tabla Silver aún (Carga Inicial). Se procesará todo.")
+        print(f"Detalle del error: {e}")
+
+    df = df[df['gameCreation'] > ultima_fecha].copy()
+    cantidad_nuevas = len(df)
+    print(f"🔥 Nuevas partidas para procesar: {cantidad_nuevas}")
+    if df.empty:
+        print("😴 No hay datos nuevos. El script termina aquí.")
+        print(f"Partidas totales en silver: {partidas_guardadas}.")
+        return False
 
 #---- 1era Transformacion borrar las partidas no interesantes, que en este caso son las que no son clasificatorias, estas se identifican con queueId
-
-basura = ["NONE", "nan", "null", "NA", ""]
-df = df[~df["lane"].isin(basura)]
-
-print(df.info( memory_usage= 'deep'))
-
-ids_rankeds = [420, 440]
-df = df[df["queueId"].isin(ids_rankeds)]
-
-
-#---- 2era Transformacion ordenar tipos de datos por fecha
 df_silver = df
-df_silver = df_silver.sort_values(by='gameCreation', ascending=False).reset_index(drop=True) # Se ordenan por ascendente y se resetean los indices
+def transformar_partidas(df):
+    basura = ["NONE", "nan", "null", "NA", ""]
+    df = df[~df["lane"].isin(basura)]
+
+    print(df.info( memory_usage= 'deep'))
+
+    ids_rankeds = [420, 440]
+    df = df[df["queueId"].isin(ids_rankeds)]
 
 
-df_silver['fecha_hora'] = pd.to_datetime(df_silver['gameCreation'], unit='ms', utc=False)   # Conversion de timestamp a fecha y hora
-hora_argentina = df_silver['fecha_hora'].dt.tz_localize('UTC').dt.tz_convert('America/Argentina/Buenos_Aires')
-df_silver['fecha_local'] = hora_argentina.dt.tz_localize(None)
-
-muertes_seguras = df_silver['deaths'].replace(0, 1)
-df_silver['kda'] = (df_silver['kills'] + df_silver['assists']) / muertes_seguras
-df_silver['kda'] = df_silver['kda'].round(2)
-
-#---- 3da Transformacion seleccionar columnas de interes
-columnas_elegidas = [
-    'fecha_local',
-    'championName',
-    'lane',
-    'kda',
-    'win',
-    'kills',
-    'deaths',
-    'assists',
-    'totalDamageDealtToChampions',
-    'goldEarned',
-    'visionScore',
-    'totalMinionsKilled',
-    'item0',
-    'item1',
-    'item2',
-    'item3',
-    'item4',
-    'item5',
-    'item6',
-    'gameCreation'
-]
-
-df_silver = df_silver[columnas_elegidas].copy()
-
-#----4ta Transformacion cambio de tipo de variables
-conversion_mapping = {
-    "fecha_local": "datetime64[ns]",
-    "championName": "string",
-    "lane": "string",
-    "kda": "float32",
-    "win": "bool",
-    "kills": "int8",
-    "deaths": "int8",
-    "assists": "int8",
-    "totalDamageDealtToChampions": "int32",
-    "goldEarned": "int32",
-    "visionScore": "int8",
-    "totalMinionsKilled": "int16",
-    "item0": "int16",
-    "item1": "int16",
-    "item2": "int16",
-    "item3": "int16",
-    "item4": "int16",
-    "item5": "int16",
-    "item6": "int16"
-    }
-
-df_silver = df_silver.astype(conversion_mapping)
+    #---- 2era Transformacion ordenar tipos de datos por fecha
+    df_silver = df
+    df_silver = df_silver.sort_values(by='gameCreation', ascending=False).reset_index(drop=True) # Se ordenan por ascendente y se resetean los indices
 
 
-#---- 5ta Transformacion borrar duplicados
-df_silver = df_silver.drop_duplicates().reset_index(drop=True)
+    df_silver['fecha_hora'] = pd.to_datetime(df_silver['gameCreation'], unit='ms', utc=False)   # Conversion de timestamp a fecha y hora
+    hora_argentina = df_silver['fecha_hora'].dt.tz_localize('UTC').dt.tz_convert('America/Argentina/Buenos_Aires')
+    df_silver['fecha_local'] = hora_argentina.dt.tz_localize(None)
 
-cantidad_filas_nuevas= len(df_silver)
+    muertes_seguras = df_silver['deaths'].replace(0, 1)
+    df_silver['kda'] = (df_silver['kills'] + df_silver['assists']) / muertes_seguras
+    df_silver['kda'] = df_silver['kda'].round(2)
+
+    #---- 3da Transformacion seleccionar columnas de interes
+    columnas_elegidas = [
+        'fecha_local',
+        'championName',
+        'lane',
+        'kda',
+        'win',
+        'kills',
+        'deaths',
+        'assists',
+        'totalDamageDealtToChampions',
+        'goldEarned',
+        'visionScore',
+        'totalMinionsKilled',
+        'item0',
+        'item1',
+        'item2',
+        'item3',
+        'item4',
+        'item5',
+        'item6',
+        'gameCreation'
+    ]
+
+    df_silver = df_silver[columnas_elegidas].copy()
+
+    #----4ta Transformacion cambio de tipo de variables
+    conversion_mapping = {
+        "fecha_local": "datetime64[ns]",
+        "championName": "string",
+        "lane": "string",
+        "kda": "float32",
+        "win": "bool",
+        "kills": "int8",
+        "deaths": "int8",
+        "assists": "int8",
+        "totalDamageDealtToChampions": "int32",
+        "goldEarned": "int32",
+        "visionScore": "int8",
+        "totalMinionsKilled": "int16",
+        "item0": "int16",
+        "item1": "int16",
+        "item2": "int16",
+        "item3": "int16",
+        "item4": "int16",
+        "item5": "int16",
+        "item6": "int16"
+        }
+
+    df_silver = df_silver.astype(conversion_mapping)
 
 
-print(df_silver.head())
-print(df_silver.info(memory_usage= 'deep'))
+    #---- 5ta Transformacion borrar duplicados
+    df_silver = df_silver.drop_duplicates().reset_index(drop=True)
+    return df_silver
 
 
-save_data_as_delta(df_silver, statsSilver_dir, storage_options, mode="append")
-print(f"Partidas antiguas en silver: {partidas_guardadas}, nuevas: {cantidad_filas_nuevas}.")
-st.dataframe(df_silver)
+def guardar_silver(df_silver):
+    print(df_silver.head())
+    print(df_silver.info(memory_usage= 'deep'))
 
+    cantidad_filas_nuevas= len(df_silver)
+    save_data_as_delta(df_silver, statsSilver_dir, storage_options, mode="append")
+    print(f"Partidas antiguas en silver: {partidas_guardadas}, nuevas: {cantidad_filas_nuevas}.")
+    st.dataframe(df_silver)                 #muestra en streamlit el dataframe silver
+
+
+def ejecutar_transformacion():
+    if verificar_silver():
+        df_silver = transformar_partidas(entregar_bronze())
+        guardar_silver(df_silver)

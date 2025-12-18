@@ -152,74 +152,72 @@ storage_options = dict(st.secrets["mysql-db"])
 bkt_name = storage_options["bkt_name"]
 
 #----------------------------------------------
+def extraccion_lolstats():
+    region="americas"
+    gameName="Sebax"
+    tagLine="100"
 
-region="americas"
-gameName="Sebax"
-tagLine="100"
+    url_base= f"https://{ region}.api.riotgames.com"
+    endpoint= f"riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}"                   #este primer llamado a la api recoje valores estaticos como lo son el puuid, gameTag y tagLine
 
-url_base= f"https://{ region}.api.riotgames.com"
-endpoint= f"riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}"                   #este primer llamado a la api recoje valores estaticos como lo son el puuid, gameTag y tagLine
+    #--------------------------------------------------- Primer llamado a la api para ver que los datos del jugador a analizar
+    usuario_json = get_data(url_base, endpoint,headers=headers)
+    puuidUsuario = usuario_json['puuid']
 
-#--------------------------------------------------- Primer llamado a la api para ver que los datos del jugador a analizar
-usuario_json = get_data(url_base, endpoint,headers=headers)
-puuidUsuario = usuario_json['puuid']
+    #--------------------------------------------------- Guardado full del perfil del usuario en bronze 
+    perfil_df = pd.DataFrame([usuario_json])
+    ruta_perfil = "s3://fernandofranco-bucket/datalake/bronze/riotgames_api/summoner_profile/"
+    write_deltalake(ruta_perfil, perfil_df, mode="overwrite", storage_options=storage_options, schema_mode="overwrite")
 
-#--------------------------------------------------- Guardado full del perfil del usuario en bronze 
-perfil_df = pd.DataFrame([usuario_json])
-ruta_perfil = "s3://fernandofranco-bucket/datalake/bronze/riotgames_api/summoner_profile/"
-write_deltalake(ruta_perfil, perfil_df, mode="overwrite", storage_options=storage_options, schema_mode="overwrite")
+    print("Perfil guardado correctamente.")
+    print(perfil_df.head())
+    #--------------------------------------------------- Segundo llamado para obtener las ultimas 20 partidas del jugador cabe aclarar que viene los id_match que para cada uno hay q hacer un llamado
 
-print("Perfil guardado correctamente.")
-print(perfil_df.head())
-#--------------------------------------------------- Segundo llamado para obtener las ultimas 20 partidas del jugador cabe aclarar que viene los id_match que para cada uno hay q hacer un llamado
+    endpoint= f"lol/match/v5/matches/by-puuid/{puuidUsuario}/ids"
+    listaMatchs_json= get_data(url_base, endpoint,headers=headers) 
 
-endpoint= f"lol/match/v5/matches/by-puuid/{puuidUsuario}/ids"
-listaMatchs_json= get_data(url_base, endpoint,headers=headers) 
+    #--------------------------------------------------- 20 Llamados a la api, ya que se extrayeron 20 id_match con esta linea hago 20 llamados para poder tener los datos de cada partida
+    print("Cargando datos de las partidas(aprox: 20s )...")
 
-#--------------------------------------------------- 20 Llamados a la api, ya que se extrayeron 20 id_match con esta linea hago 20 llamados para poder tener los datos de cada partida
-print("Cargando datos de las partidas(aprox: 20s )...")
+    datos_acumulados = []
+    for matchs in listaMatchs_json:
+        endpoint= f"lol/match/v5/matches/{matchs}"
+        match1 = get_data(url_base, endpoint,headers=headers)
+        listaParticipantes=match1['info']['participants']
+        fecha_creacion= match1['info']['gameCreation']
+        queue_id= match1['info']['queueId']
 
-datos_acumulados = []
-for matchs in listaMatchs_json:
-    endpoint= f"lol/match/v5/matches/{matchs}"
-    match1 = get_data(url_base, endpoint,headers=headers)
-    listaParticipantes=match1['info']['participants']
-    fecha_creacion= match1['info']['gameCreation']
-    queue_id= match1['info']['queueId']
+        for jugador in listaParticipantes:
+            if jugador['puuid'] == usuario_json['puuid']:
+                jugador['gameCreation'] = fecha_creacion
+                jugador['queueId'] = queue_id
 
-    for jugador in listaParticipantes:
-        if jugador['puuid'] == usuario_json['puuid']:
-            jugador['gameCreation'] = fecha_creacion
-            jugador['queueId'] = queue_id
-
-            datos_acumulados.append(jugador)                      # esta linea es lo que almacena cada informacion por partida
-
-
-#---------------------------------------------------------------- se crea el dataframe y se procesa un poco porque alparecer tenia demasiada informacion para la libreria (fuente gemini(me rompia el codigo))
-
-df_final = pd.DataFrame(datos_acumulados)
-
-#df_final.to_excel("historial_completo_riot.xlsx", index=False)
+                datos_acumulados.append(jugador)                      # esta linea es lo que almacena cada informacion por partida
 
 
-columnas_complejas = ['challenges', 'perks', 'styles']          #esto lo agregue porque al parecer la api entrega demasiada informacion osea un objeto entre listas de objetos que despues ese objeto tiene otra lista de objetos y me rompia el codigo
-for col in columnas_complejas:                                  #quiero mencionar que aca tuve un poco de ayuda de mi confiable amigo gemini
-    if col in df_final.columns:
-        df_final[col] = df_final[col].astype(str)
+    #---------------------------------------------------------------- se crea el dataframe y se procesa un poco porque alparecer tenia demasiada informacion para la libreria (fuente gemini(me rompia el codigo))
+
+    df_final = pd.DataFrame(datos_acumulados)
+
+    #df_final.to_excel("historial_completo_riot.xlsx", index=False)
+
+
+    columnas_complejas = ['challenges', 'perks', 'styles']          #esto lo agregue porque al parecer la api entrega demasiada informacion osea un objeto entre listas de objetos que despues ese objeto tiene otra lista de objetos y me rompia el codigo
+    for col in columnas_complejas:                                  #quiero mencionar que aca tuve un poco de ayuda de mi confiable amigo gemini
+        if col in df_final.columns:
+            df_final[col] = df_final[col].astype(str)
 
 
 
-#--------------------------------------------------------------- # Almacenamiento en minIO
+    #--------------------------------------------------------------- # Almacenamiento en minIO
 
-bronze_dir = f"s3://{bkt_name}/datalake/bronze/riotgames_api"
-stations_raw_dir = f"{bronze_dir}/registroSebastian"
-save_data_as_delta(df_final, stations_raw_dir, storage_options, mode="append")
+    bronze_dir = f"s3://{bkt_name}/datalake/bronze/riotgames_api"
+    stations_raw_dir = f"{bronze_dir}/registroSebastian"
+    save_data_as_delta(df_final, stations_raw_dir, storage_options, mode="append")
 
-#--------------------------------------------------------------- Informacion para debug
-dt = DeltaTable(stations_raw_dir, storage_options=storage_options)
-print(f"Cant de filas: {dt.to_pandas().shape[0]}")
+    #--------------------------------------------------------------- Informacion para debug
+    dt = DeltaTable(stations_raw_dir, storage_options=storage_options)
+    print(f"Cant de filas: {dt.to_pandas().shape[0]}")
 
-print("Dataframe guardado en Delta Lake correctamente.")
-
-st.title("🚀 Mi Proyecto de Data Engineering")
-st.write("Si puedes leer esto, ¡el servidor funciona!")
+    print("Dataframe guardado en Delta Lake correctamente.")
+    st.write("Partidas extraidas", dt.to_pandas().shape[0])
