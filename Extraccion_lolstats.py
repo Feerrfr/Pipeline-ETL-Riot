@@ -148,7 +148,7 @@ api_credentials= st.secrets["api-credentials"]
 api_key= api_credentials["api_key"]   #Cambia cada 24hs
 headers = {"X-Riot-Token": api_key}
 
-storage_options = dict(parser["mysql-db"])
+storage_options = dict(st.secrets["mysql-db"])
 bkt_name = storage_options["bkt_name"]
 
 #----------------------------------------------
