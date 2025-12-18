@@ -6,6 +6,7 @@ from deltalake import write_deltalake, DeltaTable
 from deltalake.exceptions import TableNotFoundError
 from datetime import datetime, timedelta
 from pprint import pprint
+import streamlit as st
 
 def get_data(base_url, endpoint, data_field=None, params=None, headers=None):
     """
@@ -142,7 +143,7 @@ def upsert_data_as_delta(data, data_path, predicate, storage_options):
 parser = ConfigParser()                                             # Sirve para entrar a pipeline.conf y sacar las credenciales de ahi
 parser.optionxform = str
 parser.read("pipeline.conf")
-api_credentials= parser["api-credentials"]
+api_credentials= st.secret["api-credentials"]
 
 api_key= api_credentials["api_key"]   #Cambia cada 24hs
 headers = {"X-Riot-Token": api_key}
