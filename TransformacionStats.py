@@ -30,7 +30,7 @@ parser = ConfigParser()                                             # Sirve para
 parser.optionxform = str
 parser.read("pipeline.conf")
 
-storage_options = dict(parser["mysql-db"])
+storage_options = dict(st.secrets["mysql-db"])
 bkt_name = storage_options["bkt_name"]
 
 
