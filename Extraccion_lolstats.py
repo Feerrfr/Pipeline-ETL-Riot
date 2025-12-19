@@ -152,10 +152,10 @@ storage_options = dict(st.secrets["mysql-db"])
 bkt_name = storage_options["bkt_name"]
 
 #----------------------------------------------
-def extraccion_lolstats():
+def extraccion_lolstats(Nick, Tag):
     region="americas"
-    gameName="Sebax"
-    tagLine="100"
+    gameName=Nick
+    tagLine=Tag
 
     url_base= f"https://{ region}.api.riotgames.com"
     endpoint= f"riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}"                   #este primer llamado a la api recoje valores estaticos como lo son el puuid, gameTag y tagLine
@@ -212,7 +212,7 @@ def extraccion_lolstats():
     #--------------------------------------------------------------- # Almacenamiento en minIO
 
     bronze_dir = f"s3://{bkt_name}/datalake/bronze/riotgames_api"
-    stations_raw_dir = f"{bronze_dir}/registroSebastian"
+    stations_raw_dir = f"{bronze_dir}/registro{Nick}{Tag}"
     save_data_as_delta(df_final, stations_raw_dir, storage_options, mode="append")
 
     #--------------------------------------------------------------- Informacion para debug

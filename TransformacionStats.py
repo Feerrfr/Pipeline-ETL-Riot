@@ -37,31 +37,51 @@ bkt_name = storage_options["bkt_name"]
 
 
 
+
 #---- Lectura de Delta y convertido en dataframe
 
 bronze_dir = f"s3://{bkt_name}/datalake/bronze/riotgames_api"
-statsBronze_dir = f"{bronze_dir}/registroSebastian"
+statsBronze_dir = ""
 
 silver_dir = f"s3://{bkt_name}/datalake/silver/riotgames_api"
-statsSilver_dir = f"{silver_dir}/registroSebastian"
-
-dt_bronze = DeltaTable(statsBronze_dir, storage_options=storage_options)
+statsSilver_dir = ""
 
 
-def entregar_bronze():
-    return dt_bronze.to_pandas()
-df = dt_bronze.to_pandas()
+def setear_dir(nick, tag):
+    statsBronze_dir = f"{bronze_dir}/registro{nick}{tag}"
+    statsSilver_dir = f"{silver_dir}/registro{nick}{tag}"
+    return statsBronze_dir, statsSilver_dir
+
+def entregar_bronze(nick, tag):
+    rutaBronze, rutaSilver = setear_dir(nick, tag)
+    print(f"DEBUG RUTA: {rutaBronze} (Tipo: {type(rutaBronze)})")
+    dt_bronze = DeltaTable(rutaBronze, storage_options=storage_options)
+    print(f"DEBUG RUTA: {rutaSilver} (Tipo: {type(rutaSilver)})")
+    try:
+        dt_silver = DeltaTable(rutaSilver, storage_options=storage_options)
+        df_fechas = dt_silver.to_pandas(columns=["gameCreation"])
+        ultima_fecha = df_fechas["gameCreation"].max()
+        df = df[df['gameCreation'] > ultima_fecha].copy()
+        return df
+    except Exception as e:
+        print("No existe tabla Silver aún (Carga Inicial). Se procesará todo.")
+        print(f"Detalle del error: {e}")
+        return dt_bronze.to_pandas()
+    
+
 #print(df.dtypes)
 partidas_guardadas = 0
 #---- Verificar existencia de silver_data, y obtener la última fecha procesada. De no haber nueva el script se detiene.
-def verificar_silver():
+def verificar_silver(nick, tag):
+    rutaBronze, rutaSilver = setear_dir(nick, tag)
+    dt_bronze = DeltaTable(rutaBronze, storage_options=storage_options)
     print("Última partida procesada...")
-
+    df = dt_bronze.to_pandas()
     ultima_fecha = 0
     partidas_guardadas = 0
     try:
         # 1. Intentamos conectar a la tabla Silver existente
-        dt_silver = DeltaTable(statsSilver_dir, storage_options=storage_options)
+        dt_silver = DeltaTable(rutaSilver, storage_options=storage_options)
         df_fechas = dt_silver.to_pandas(columns=["gameCreation"])
         partidas_guardadas = len(df_fechas)
 
@@ -80,13 +100,15 @@ def verificar_silver():
     df = df[df['gameCreation'] > ultima_fecha].copy()
     cantidad_nuevas = len(df)
     print(f"🔥 Nuevas partidas para procesar: {cantidad_nuevas}")
+    
     if df.empty:
         print("😴 No hay datos nuevos. El script termina aquí.")
         print(f"Partidas totales en silver: {partidas_guardadas}.")
         return False
+    return True
 
 #---- 1era Transformacion borrar las partidas no interesantes, que en este caso son las que no son clasificatorias, estas se identifican con queueId
-df_silver = df
+
 def transformar_partidas(df):
     basura = ["NONE", "nan", "null", "NA", ""]
     df = df[~df["lane"].isin(basura)]
@@ -167,7 +189,8 @@ def transformar_partidas(df):
     return df_silver
 
 
-def guardar_silver(df_silver):
+def guardar_silver(df_silver,nick, tag):
+    _, statsSilver_dir = setear_dir(nick, tag)
     print(df_silver.head())
     print(df_silver.info(memory_usage= 'deep'))
 
@@ -177,7 +200,7 @@ def guardar_silver(df_silver):
     st.dataframe(df_silver)                 #muestra en streamlit el dataframe silver
 
 
-def ejecutar_transformacion():
-    if verificar_silver():
-        df_silver = transformar_partidas(entregar_bronze())
-        guardar_silver(df_silver)
+def ejecutar_transformacion(nick, tag):
+    if verificar_silver(nick, tag):
+        df_silver = transformar_partidas(entregar_bronze(nick, tag))
+        guardar_silver(df_silver, nick, tag)
