@@ -161,6 +161,7 @@ def extraccion_lolstats(Nick, Tag):
     endpoint= f"riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}"                   #este primer llamado a la api recoje valores estaticos como lo son el puuid, gameTag y tagLine
 
     #--------------------------------------------------- Primer llamado a la api para ver que los datos del jugador a analizar
+    st.write("Iniciando extracción de datos...")
     usuario_json = get_data(url_base, endpoint,headers=headers)
     puuidUsuario = usuario_json['puuid']
 
