@@ -64,24 +64,34 @@ if __name__ == "__main__":
     #tag = partes[1].strip()
     nick = st.session_state['usuario_nick']
     tag = st.session_state['usuario_tag']
-    if st.button("🚀 Correr script completo"):# 1. Ejecutar Bronze (Extracción)
-        extraccion.extraccion_lolstats(nick, tag)
-        print("✅ Extracción completada.\n")
-            
-            # 2. Ejecutar Silver (Limpieza)
-            # Solo se ejecuta si el paso 1 (Bronze) fue True
-        transformacion.ejecutar_transformacion(nick, tag)
-        print("✅ Transformación completada.\n")
+    if nick is not None and tag is not None:
+        
+        st.info(f"Datos listos para usar: {nick} #{tag}")
+        
+        
+        if st.button("🚀 Correr script completo"):# 1. Ejecutar Bronze (Extracción)
+            extraccion.extraccion_lolstats(nick, tag)
+            print("✅ Extracción completada.\n")
+                
+                # 2. Ejecutar Silver (Limpieza)
+                # Solo se ejecuta si el paso 1 (Bronze) fue True
+            transformacion.ejecutar_transformacion(nick, tag)
+            print("✅ Transformación completada.\n")
+        
+
+        if st.button("🔄 Buscar nuevas partidas"):
+                print("-------------------------------")
+                st.write("Buscando nuevas partidas...")
+                extraccion.extraccion_lolstats(nick, tag)
+                st.write("Proceso completado. Revisa la consola para más detalles.")
+
+        if st.button("📊 Ver datos Silver"):
+            st.write("Mostrando datos Silver...")
+            transformacion.ejecutar_transformacion(nick, tag)
+
+
+    else:
+    # Si son None, significa que el usuario aún no llenó el formulario
+        st.write("👈 Por favor, completa el formulario y dale a 'Guardar' primero.")
     
-
-    if st.button("🔄 Buscar nuevas partidas"):
-        print("-------------------------------")
-        st.write("Buscando nuevas partidas...")
-        extraccion.extraccion_lolstats(nick, tag)
-        st.write("Proceso completado. Revisa la consola para más detalles.")
-
-    if st.button("📊 Ver datos Silver"):
-        st.write("Mostrando datos Silver...")
-        transformacion.ejecutar_transformacion(nick, tag)
-
 
