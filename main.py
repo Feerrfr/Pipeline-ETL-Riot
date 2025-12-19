@@ -32,18 +32,38 @@ st.set_page_config(page_title="LoL Data Lake", page_icon="⚔️", layout="wide"
 
 if __name__ == "__main__":
     print("🚀 INICIANDO PIPELINE DE DATOS: Player Analisis\n")
+    nick = ""
+    tag = ""   
+    with st.form("mi_formulario"):
+        st.write("Configuración")
+        riot_id_input = st.text_input("Ingresa Riot ID (Nombre#Tag):")
+        
+        # Este botón es especial, no deja salir nada hasta que se aprieta
+        enviado = st.form_submit_button("🚀 Buscar Partidas")
 
-    st.title("🚀 Analisis a un jugador de League Of Legends ETL:")
-    st.write("Panel de control")
+        if enviado:
+            # Aquí adentro pones la misma lógica de validación de arriba
+            if "#" in riot_id_input:
+                partes = riot_id_input.split('#', 1)
+                nick = partes[0].strip()
+                tag = partes[1].strip()
+                st.session_state['usuario_nick'] = nick
+                st.session_state['usuario_tag'] = tag
+                #extraccion.extraccion_lolstats(nick, tag)
+            else:
+                st.error("Formato incorrecto.")
+    #st.title("🚀 Analisis a un jugador de League Of Legends ETL:")
+    #st.write("Panel de control")
     #st.dataframe(transformacion.transformar_partidas(transformacion.entregar_bronze()))
 
 
-    id = st.text_input("Ingresa el Riot ID / Nombre:", placeholder="Ej: Faker")
-    partes = id.split('#', 1)
+    #id = st.text_input("Ingresa el Riot ID / Nombre:", placeholder="Ej: Faker")
+    #partes = id.split('#', 1)
         
-    nick = partes[0].strip() # 'Sebax' (strip quita espacios en blanco sobrantes)
-    tag = partes[1].strip()
-
+    #nick = partes[0].strip() # 'Sebax' (strip quita espacios en blanco sobrantes)
+    #tag = partes[1].strip()
+    nick = st.session_state['usuario_nick']
+    tag = st.session_state['usuario_tag']
     if st.button("🚀 Correr script completo"):# 1. Ejecutar Bronze (Extracción)
         extraccion.extraccion_lolstats(nick, tag)
         print("✅ Extracción completada.\n")
