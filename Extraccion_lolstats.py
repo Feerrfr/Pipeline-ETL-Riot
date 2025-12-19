@@ -170,6 +170,7 @@ def extraccion_lolstats(Nick, Tag):
     write_deltalake(ruta_perfil, perfil_df, mode="overwrite", storage_options=storage_options, schema_mode="overwrite")
 
     print("Perfil guardado correctamente.")
+    st.write("Perfil guardado correctamente.")
     print(perfil_df.head())
     #--------------------------------------------------- Segundo llamado para obtener las ultimas 20 partidas del jugador cabe aclarar que viene los id_match que para cada uno hay q hacer un llamado
 
@@ -178,7 +179,7 @@ def extraccion_lolstats(Nick, Tag):
 
     #--------------------------------------------------- 20 Llamados a la api, ya que se extrayeron 20 id_match con esta linea hago 20 llamados para poder tener los datos de cada partida
     print("Cargando datos de las partidas(aprox: 20s )...")
-
+    st.write("Cargando datos de las partidas(aprox: 20s )...")
     datos_acumulados = []
     for matchs in listaMatchs_json:
         endpoint= f"lol/match/v5/matches/{matchs}"
