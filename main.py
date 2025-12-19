@@ -70,6 +70,9 @@ if __name__ == "__main__":
         
         
         if st.button("🚀 Correr script completo"):# 1. Ejecutar Bronze (Extracción)
+            print("-------------------------------")
+            print("Iniciando proceso completo de ETL...\n")             
+                # 1. Ejecutar Bronze (Extracción)
             extraccion.extraccion_lolstats(nick, tag)
             print("✅ Extracción completada.\n")
                 
