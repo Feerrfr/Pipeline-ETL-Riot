@@ -62,8 +62,8 @@ if __name__ == "__main__":
         
     #nick = partes[0].strip() # 'Sebax' (strip quita espacios en blanco sobrantes)
     #tag = partes[1].strip()
-    nick = st.session_state.get['usuario_nick']
-    tag = st.session_state.get['usuario_tag']
+    nick = st.session_state.get('usuario_nick')
+    tag = st.session_state.get('usuario_tag')
     if nick is not None and tag is not None:
         
         st.info(f"Datos listos para usar: {nick} #{tag}")
