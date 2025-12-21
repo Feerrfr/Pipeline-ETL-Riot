@@ -222,4 +222,6 @@ def extraccion_lolstats(Nick, Tag):
     print(f"Cant de filas: {dt.to_pandas().shape[0]}")
 
     print("Dataframe guardado en Delta Lake correctamente.")
-    st.write("Partidas extraidas", dt.to_pandas().shape[0])
+    st.write("Partidas extraidas", dt.to_pandas().shape[0], ", asi se ve una muestra:")
+    st.dataframe(dt.to_pandas().head(1))
+    

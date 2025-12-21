@@ -107,6 +107,30 @@ def verificar_silver(nick, tag):
         return False
     return True
 
+def entregar_presilver(nick, tag):
+    _, rutaSilver = setear_dir(nick,tag)
+    df_bronze = entregar_bronze(nick,tag)
+    try:
+        # 1. Intentamos conectar a la tabla Silver existente
+        dt_silver = DeltaTable(rutaSilver, storage_options=storage_options)
+        df_fechas = dt_silver.to_pandas(columns=["gameCreation"])
+
+        if not df_fechas.empty:
+            # Buscamos el valor máximo (la partida más reciente)
+            ultima_fecha = df_fechas["gameCreation"].max()
+            print(f"📅 Última fecha encontrada en Silver: {datetime.fromtimestamp(ultima_fecha / 1000)}")
+            df = df_bronze[df_bronze['gameCreation'] > ultima_fecha].copy()
+            return df
+        else:
+            print("⚠️ La tabla Silver existe pero está vacía. Se procesará todo.") 
+            return df_bronze 
+    except Exception as e:
+        print("✨ No existe tabla Silver aún (Carga Inicial). Se procesará todo.")
+        print(f"Detalle del error: {e}")
+        return df_bronze
+
+
+
 #---- 1era Transformacion borrar las partidas no interesantes, que en este caso son las que no son clasificatorias, estas se identifican con queueId
 
 def transformar_partidas(df):
@@ -193,14 +217,25 @@ def guardar_silver(df_silver,nick, tag):
     _, statsSilver_dir = setear_dir(nick, tag)
     print(df_silver.head())
     print(df_silver.info(memory_usage= 'deep'))
+    cantidad_filas_viejas=0
+    try:
+        dt_viejas  = DeltaTable(statsSilver_dir, storage_options=storage_options)
+        df_fechas = dt_viejas.to_pandas(columns=["gameCreation"])
+        cantidad_filas_viejas = len(df_fechas)
+    except Exception as e:
+        print("no hay partidas viejas")
 
     cantidad_filas_nuevas= len(df_silver)
+
     save_data_as_delta(df_silver, statsSilver_dir, storage_options, mode="append")
-    print(f"Partidas antiguas en silver: {partidas_guardadas}, nuevas: {cantidad_filas_nuevas}.")
-    st.dataframe(df_silver)                 #muestra en streamlit el dataframe silver
+    print(f"Partidas antiguas en silver: {cantidad_filas_viejas}, nuevas: {cantidad_filas_nuevas}.")
+    st.write(f"Partidas antiguas en silver: {cantidad_filas_viejas}, nuevas: {cantidad_filas_nuevas}.")
+    st.write("Asi se ven los datos procesados para silver:")
+    df_procesadas  = (DeltaTable(statsSilver_dir, storage_options=storage_options)).to_pandas()
+    st.dataframe(df_procesadas)                 #muestra en streamlit el dataframe silver
 
 
 def ejecutar_transformacion(nick, tag):
     if verificar_silver(nick, tag):
-        df_silver = transformar_partidas(entregar_bronze(nick, tag))
+        df_silver = transformar_partidas(entregar_presilver(nick, tag))
         guardar_silver(df_silver, nick, tag)

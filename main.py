@@ -39,7 +39,7 @@ if __name__ == "__main__":
         riot_id_input = st.text_input("Ingresa Riot ID (Nombre#Tag):")
         
         # Este botón es especial, no deja salir nada hasta que se aprieta
-        enviado = st.form_submit_button("🚀 Buscar Partidas")
+        enviado = st.form_submit_button("🕵️ Buscar Jugador")
 
         if enviado:
             # Aquí adentro pones la misma lógica de validación de arriba
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                 st.write("Proceso completado. Revisa la consola para más detalles.")
 
         if st.button("📊 Ver datos Silver"):
-            st.write("Mostrando datos Silver...")
+            st.write("Ejecutando transformación y mostrando datos Silver...")
             transformacion.ejecutar_transformacion(nick, tag)
 
 
