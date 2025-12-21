@@ -33,6 +33,7 @@ st.set_page_config(page_title="LoL Data Lake", page_icon="⚔️", layout="wide"
 
 if __name__ == "__main__":
     print("🚀 INICIANDO PIPELINE DE DATOS: Player Analisis\n")
+    st.title("🐋 Pipeline ETL - Análisis de Jugadores de League Of Legends")
     nick = ""
     tag = ""   
     with st.form("mi_formulario"):
