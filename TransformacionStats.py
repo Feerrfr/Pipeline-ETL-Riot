@@ -89,6 +89,7 @@ def verificar_silver(nick, tag):
             # Buscamos el valor máximo (la partida más reciente)
             ultima_fecha = df_fechas["gameCreation"].max()
             print(f"📅 Última fecha encontrada en Silver: {datetime.fromtimestamp(ultima_fecha / 1000)}")
+            st.write(f"📅 Última fecha encontrada en Silver: {datetime.fromtimestamp(ultima_fecha / 1000)}")
             return True
         else:
             print("⚠️ La tabla Silver existe pero está vacía. Se procesará todo.") 

@@ -4,6 +4,7 @@ import time
 import streamlit as st
 import TransformacionStats as transformacion
 import Extraccion_lolstats as extraccion
+import gold
 
 @st.cache_data
 
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     tag = ""   
     with st.form("mi_formulario"):
         st.write("Configuración")
-        riot_id_input = st.text_input("Ingresa Riot ID (Nombre#Tag):")
+        riot_id_input = st.text_input("Ingresa Riot ID (Nombre#Tag):", placeholder="Ej: Sebax#100")
         
         # Este botón es especial, no deja salir nada hasta que se aprieta
         enviado = st.form_submit_button("🕵️ Buscar Jugador")
@@ -80,6 +81,10 @@ if __name__ == "__main__":
                 # Solo se ejecuta si el paso 1 (Bronze) fue True
             transformacion.ejecutar_transformacion(nick, tag)
             print("✅ Transformación completada.\n")
+
+                # 3. Ejecutar Gold (Análisis)
+            gold.ejecutar_gold(nick, tag)
+            print("✅ Análisis completado.\n")
         
 
         if st.button("🔄 Buscar nuevas partidas"):
@@ -91,6 +96,10 @@ if __name__ == "__main__":
         if st.button("📊 Ver datos Silver"):
             st.write("Ejecutando transformación y mostrando datos Silver...")
             transformacion.ejecutar_transformacion(nick, tag)
+
+        if st.button("🐊 Analisar Gold"):
+            st.write("Ejecutando gold para análisis avanzado...")
+            gold.ejecutar_gold(nick, tag)
 
 
     else:
