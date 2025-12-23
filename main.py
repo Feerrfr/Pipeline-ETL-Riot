@@ -98,7 +98,7 @@ if __name__ == "__main__":
             st.write("Ejecutando transformación y mostrando datos Silver...")
             transformacion.ejecutar_transformacion(nick, tag)
 
-        if st.button("🐊 Analisar Gold"):
+        if st.button("🐊 Analizar Gold"):
             st.title("Análisis Avanzado - Gold 📊")
             st.write("Ejecutando gold para análisis avanzado...")
             gold.ejecutar_gold(nick, tag)
