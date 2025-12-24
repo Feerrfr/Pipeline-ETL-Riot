@@ -1,4 +1,4 @@
-# Analisis a un jugador de League Of Legends ETL:
+# Analisis a un jugador de League Of Legends ETL: [Link](https://pipelinetop.streamlit.app/)
 ## Descripcion del proyecto
 La idea principal del proyecto es recopilar todas las partidas de un jugador en especial, para poder entender como se dessarrolla competitivamente. Para esto hago uso de la API de riotgames, lamentablemente tiene que ser actualizada cada 24hs, con la finalidad de recopilar los datos principales del usuario y lo mas importante sus partidas jugadas.
 
