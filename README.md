@@ -2,6 +2,7 @@
 ## Descripcion del proyecto
 La idea principal del proyecto es recopilar todas las partidas de un jugador en especial, para poder entender como se dessarrolla competitivamente. Para esto hago uso de la API de riotgames, lamentablemente tiene que ser actualizada cada 24hs, con la finalidad de recopilar los datos principales del usuario y lo mas importante sus partidas jugadas.
 
+### AVISO: Seguramente la API_KEY no este actualizada para cuando se quiera abrir por una cuestion de la API que necesita ser cambiada cada 24 hs de igual manera se pueden correr las transformaciones y el analisis de datos GRACIASSS!!! Tambien que si la app se encuentra inactiva suele tardar un poco en ser asignada una maquina virtual.
 
 ## Proceso
 
